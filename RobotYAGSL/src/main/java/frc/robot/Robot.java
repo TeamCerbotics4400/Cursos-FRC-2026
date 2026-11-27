@@ -32,6 +32,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    m_robotContainer.updateShotCalculation();
     CommandScheduler.getInstance().run();
 
     if(RobotBase.isSimulation()){
