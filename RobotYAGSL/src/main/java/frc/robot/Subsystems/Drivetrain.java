@@ -125,6 +125,14 @@ public class Drivetrain extends SubsystemBase{
         drive.simIterate();
     }
 
+    public Pose2d getPose(){
+        return drive.getPose();
+    }
+
+    public ChassisSpeeds  getChassisSpeeds(){
+        return drive.getFieldRelativeSpeed();
+    }
+
     public Pose2d getSimPose(){
         return drive.getSimPose();
     }

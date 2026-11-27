@@ -4,9 +4,11 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.pathfinding.LocalADStar;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -20,11 +22,21 @@ public class Robot extends TimedRobot {
 
     Pathfinding.setPathfinder(new LocalADStar());
     m_robotContainer = new RobotContainer();
+
+    if(RobotBase.isReal()){
+      SignalLogger.setPath("sda1/media/logs");
+    }else{
+       SignalLogger.setPath("/logs");
+    }
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
+    if(RobotBase.isSimulation()){
+      m_robotContainer.fuelSim.updateSim();
+    }
   }
 
   @Override

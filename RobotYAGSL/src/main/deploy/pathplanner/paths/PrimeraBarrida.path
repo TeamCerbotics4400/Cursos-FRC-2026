@@ -1,0 +1,70 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 4.569543509272467,
+        "y": 0.5480313837375184
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 5.9295580659704585,
+        "y": 0.741401328634789
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.610128388017117,
+        "y": 0.9879457917261072
+      },
+      "prevControl": {
+        "x": 7.123365509284557,
+        "y": 0.41967194208803416
+      },
+      "nextControl": {
+        "x": 8.046604897871001,
+        "y": 1.497512558972414
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.739514978601996,
+        "y": 2.9804992867332385
+      },
+      "prevControl": {
+        "x": 7.724247348791294,
+        "y": 2.5310846524138197
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Barrida1Final"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 88.1523897340054
+  },
+  "reversed": false,
+  "folder": "AutoUnCiclo",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 0.0
+  },
+  "useDefaultConstraints": true
+}
