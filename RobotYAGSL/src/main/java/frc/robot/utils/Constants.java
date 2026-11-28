@@ -18,7 +18,11 @@ public class Constants {
         public static double TRACKWIDTH = 0.52;
         public static double TRACKLENGTH = 0.52;
 
+        // Dimensiones exteriores con bumpers para colisiones de chasis (coincide con PathPlanner settings.json)
+        public static final double BUMPER_WIDTH = 0.90;
+        public static final double BUMPER_LENGTH = 0.90;
         public static double BUMPER_HEIGHT = 0.4;
+        public static final double ROBOT_TOTAL_HEIGHT = 0.50; // Menor a 0.565m -> pasa bajo el Trench
 
         // Controlador dedicado para apuntado al Hub / Shoot-on-the-Move
         public static final double AIM_KP = 6.0;

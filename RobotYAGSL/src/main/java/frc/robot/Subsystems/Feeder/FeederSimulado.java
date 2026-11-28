@@ -37,6 +37,7 @@ public class FeederSimulado implements FeederIO {
     private final BooleanSupplier consumeFuelCallback;
     private final DoubleSupplier launchVelocityMpsSupplier;
     private final DoubleSupplier hoodAngleDegSupplier;
+    private final DoubleSupplier extraRobotZHeightM;
 
     private final FeederInputs inputs = new FeederInputs();
     private double lastShotTimestamp = -10.0;
@@ -45,11 +46,13 @@ public class FeederSimulado implements FeederIO {
             FuelSim fuelSim,
             BooleanSupplier consumeFuelCallback,
             DoubleSupplier launchVelocityMpsSupplier,
-            DoubleSupplier hoodAngleDegSupplier) {
+            DoubleSupplier hoodAngleDegSupplier,
+            DoubleSupplier extraRobotZHeightM) {
         this.fuelSim = fuelSim;
         this.consumeFuelCallback = consumeFuelCallback;
         this.launchVelocityMpsSupplier = launchVelocityMpsSupplier;
         this.hoodAngleDegSupplier = hoodAngleDegSupplier;
+        this.extraRobotZHeightM = extraRobotZHeightM;
 
         motorFeederSim = motorFeeder.getSimState();
         motorFeederSim.setMotorType(MotorType.KrakenX60);
@@ -98,7 +101,9 @@ public class FeederSimulado implements FeederIO {
                         MetersPerSecond.of(launchSpeedMps),
                         Degrees.of(hoodAngleDegSupplier.getAsDouble()),
                         Degrees.of(0.0), // Sin torreta: apunta con el frente (+X) del chasis
-                        Meters.of(ShooterConstants.LAUNCH_HEIGHT_METERS));
+                        Meters.of(
+                                ShooterConstants.LAUNCH_HEIGHT_METERS
+                                        + extraRobotZHeightM.getAsDouble()));
             }
         }
     }

@@ -20,6 +20,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -32,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants.DrivetrainConstants;
+import frc.robot.utils.simulation.FieldCollisionSim;
 import swervelib.parser.SwerveParser;
 import swervelib.parser.SwerveParser.SwerveDriveDevices;
 import yams.mechanisms.config.SwerveDriveConfig;
@@ -60,13 +62,23 @@ public class Drivetrain extends SubsystemBase {
     private double headingErrorDeg = 180.0;
     private boolean aimingActive = false;
 
+    // Simulación de colisiones con elementos de cancha y terreno 3D (Bumps)
+    private final FieldCollisionSim fieldCollisionSim;
+    private Pose3d currentPose3d = new Pose3d();
+    private ChassisSpeeds simActualFieldSpeeds = new ChassisSpeeds();
+
     private final StructPublisher<Pose2d> posePublisher = NetworkTableInstance.getDefault()
             .getStructTopic("Drivetrain/Pose", Pose2d.struct)
             .publish();
 
+    private final StructPublisher<Pose3d> pose3dPublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("Drivetrain/Pose3d", Pose3d.struct)
+            .publish();
+
     public Drivetrain() {
+        Pose2d initialPose = new Pose2d(2.5, 4.02, Rotation2d.kZero);
         var config = new SwerveDriveConfig()
-                .withStartingPose(new Pose2d(2.5, 4.02, Rotation2d.kZero))
+                .withStartingPose(initialPose)
                 .withSubsystem(this)
                 .withTranslationController(new PIDController(4, 0, 0))
                 .withRotationController(new PIDController(3, 0, 0))
@@ -74,14 +86,22 @@ public class Drivetrain extends SubsystemBase {
 
         if (RobotBase.isReal()) {
             SwerveParser.parse(new File(Filesystem.getDeployDirectory(), "swerve-config"));
+            fieldCollisionSim = null;
         } else {
             SwerveParser.parse(new File(Filesystem.getDeployDirectory(), "swerve-config-sim"));
+            fieldCollisionSim = new FieldCollisionSim(
+                    DrivetrainConstants.BUMPER_LENGTH,
+                    DrivetrainConstants.BUMPER_WIDTH,
+                    DrivetrainConstants.TRACKLENGTH,
+                    DrivetrainConstants.TRACKWIDTH,
+                    DrivetrainConstants.ROBOT_TOTAL_HEIGHT);
         }
 
         SwerveDriveDevices devices = SwerveParser.createSwerveDriveDevices(config);
 
         gyro = (Pigeon2) devices.gyro();
         drive = devices.swerveDrive();
+        currentPose3d = new Pose3d(initialPose);
 
         aimController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -203,15 +223,44 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void simulationPeriodic() {
+        double dt = 0.020;
+        Pose2d preStepPose = getPose();
+
         drive.simIterate();
+
+        Pose2d postStepPose = getPose();
+        if (fieldCollisionSim != null) {
+            var stepResult = fieldCollisionSim.update(preStepPose, postStepPose, dt);
+            Pose2d resolvedPose = stepResult.pose2d();
+            currentPose3d = stepResult.pose3d();
+
+            if (stepResult.isColliding() || stepResult.isOnBump()) {
+                gyro.getSimState().setRawYaw(resolvedPose.getRotation().getDegrees());
+                drive.resetOdometry(resolvedPose);
+            }
+
+            // Velocidad física real en cancha (0 en dirección normal si chocó contra pared/Hub)
+            double vx = (resolvedPose.getX() - preStepPose.getX()) / dt;
+            double vy = (resolvedPose.getY() - preStepPose.getY()) / dt;
+            double omega = MathUtil.angleModulus(
+                            resolvedPose.getRotation().getRadians()
+                                    - preStepPose.getRotation().getRadians())
+                    / dt;
+            simActualFieldSpeeds = new ChassisSpeeds(vx, vy, omega);
+        }
     }
 
     public Pose2d getPose() {
         return drive.getPose();
     }
 
+    /** Pose 3D del robot (incluye elevación Z, Roll y Pitch sobre los Bumps en simulación). */
+    public Pose3d getPose3d() {
+        return RobotBase.isSimulation() ? currentPose3d : new Pose3d(getPose());
+    }
+
     public ChassisSpeeds getChassisSpeeds() {
-        return drive.getFieldRelativeSpeed();
+        return RobotBase.isSimulation() ? simActualFieldSpeeds : drive.getFieldRelativeSpeed();
     }
 
     public Pose2d getSimPose() {
@@ -224,6 +273,8 @@ public class Drivetrain extends SubsystemBase {
 
         Pose2d currentPose = getPose();
         posePublisher.set(currentPose);
+        pose3dPublisher.set(getPose3d());
+
         SmartDashboard.putNumber("Drivetrain/HeadingDeg", currentPose.getRotation().getDegrees());
         SmartDashboard.putNumber("Drivetrain/TargetHeadingDeg", targetAimHeading.getDegrees());
         SmartDashboard.putNumber("Drivetrain/HeadingErrorDeg", headingErrorDeg);

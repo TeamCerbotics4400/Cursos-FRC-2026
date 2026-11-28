@@ -40,6 +40,7 @@ public class ShooterFisico implements ShooterIO {
         flywheelConfig.Slot0.kS = ShooterConstants.kS;
         flywheelConfig.Slot0.kV = ShooterConstants.kV;
 
+        
         shooterIzqSuperior.getConfigurator().apply(flywheelConfig);
 
         shooterIzqInferior.setControl(

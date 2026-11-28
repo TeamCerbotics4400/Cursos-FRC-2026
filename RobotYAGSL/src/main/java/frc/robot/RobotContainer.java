@@ -105,7 +105,8 @@ public class RobotContainer {
                     fuelSim,
                     intake::consumeBall,
                     shooter::getLaunchVelocityMetersPerSec,
-                    shooter::getHoodAngleDeg);
+                    shooter::getHoodAngleDeg,
+                    () -> drivetrain.getPose3d().getZ());
         } else {
             feederIO = new FeederFisico();
         }
@@ -137,20 +138,20 @@ public class RobotContainer {
 
     private void configureFuelSimRobot() {
         fuelSim.registerRobot(
-                DrivetrainConstants.TRACKWIDTH,
-                DrivetrainConstants.TRACKLENGTH,
+                DrivetrainConstants.BUMPER_WIDTH,
+                DrivetrainConstants.BUMPER_LENGTH,
                 DrivetrainConstants.BUMPER_HEIGHT,
                 drivetrain::getPose,
                 drivetrain::getChassisSpeeds);
 
         // Coordenadas relativas al centro del robot: justo frente al bumper delantero (+X)
-        double halfLength = DrivetrainConstants.TRACKLENGTH / 2.0;
-        double halfWidth = DrivetrainConstants.TRACKWIDTH / 2.0;
+        double halfLength = DrivetrainConstants.BUMPER_LENGTH / 2.0;
+        double halfWidth = DrivetrainConstants.BUMPER_WIDTH / 2.0;
         fuelSim.registerIntake(
                 halfLength,
                 halfLength + 0.30,
-                -halfWidth - 0.05,
-                halfWidth + 0.05,
+                -halfWidth,
+                halfWidth,
                 () -> intakeIO.getIntakeInputs().isAbleToIntake,
                 () -> intakeIO.intakedBall());
     }
@@ -172,7 +173,6 @@ public class RobotContainer {
                         () -> latestShot.hoodAngleDeg()),
                 feeder.feedWhenReadyCommand(
                         () -> shooter.isReadyToShoot()
-                                && drivetrain.isAimed()
                                 && latestShot.isValid()));
     }
 
@@ -199,7 +199,6 @@ public class RobotContainer {
                 () -> SmartDashboard.getNumber(
                         "Shooter/ManualHoodDeg", ShooterConstants.DEFAULT_HOOD_ANGLE_DEG)));
 
-        // Botón A: Alimentar Feeder hacia el Shooter (dispara cuando el Shooter llegó a su setpoint)
         driver.a().whileTrue(feeder.feedWhenReadyCommand(shooter::isReadyToShoot));
 
         // Botón B: Alternar compensación Shoot-on-the-Move (SoTM ON / OFF)
